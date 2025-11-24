@@ -65,7 +65,127 @@ document.addEventListener("DOMContentLoaded", () => {
     // 🔹 Guardar historial del chat actual
     const chatId = currentView.type === "room" ? "GENERAL" : currentView.id;
     chatHistory[chatId] = messagesEl.innerHTML;
+
+    el.dataset.msgId = msg.id;
+
+    const rx = document.createElement("div");
+    rx.className = "reactions";
+    if (msg.reactions) {
+      Object.entries(msg.reactions).forEach(([emoji, users]) => {
+        if (users.length > 0) {
+          const span = document.createElement("span");
+          span.className = "reaction";
+          span.textContent = `${emoji} ${users.length}`;
+          rx.appendChild(span);
+        }
+      });
+    }
+    el.appendChild(rx);
   }
+
+  messagesEl.addEventListener("click", (e) => {
+    const msgEl = e.target.closest(".message");
+    if (!msgEl) return;
+    // abre un mini-panel de reacciones (simple prompt o menú)
+    showReactionsMenu(msgEl);
+  });
+
+  function showReactionsMenu(msgEl) {
+    // menú simple: emojis predefinidos
+    const emojis = ["👍", "❤️", "😂", "🔥", "😮", "😢"];
+    const menu = document.createElement("div");
+    menu.className = "reaction-menu";
+    menu.style.animation = "reactionPop 0.17s ease-out forwards";
+    emojis.forEach((em) => {
+      const btn = document.createElement("button");
+      btn.textContent = em;
+      btn.addEventListener("click", () => {
+        const msgId = msgEl.dataset.msgId;
+        // scope: deducir si es public o private
+        const scope = currentView.type === "room" ? "public" : "private";
+        const withUser =
+          currentView.type === "private" ? currentView.id : undefined;
+        socket.emit("react_message", { msgId, reaction: em, scope, withUser });
+        menu.remove();
+      });
+      menu.appendChild(btn);
+    });
+    // posiciona el menú y añádelo al body
+    document.body.appendChild(menu);
+    const rect = msgEl.getBoundingClientRect();
+    menu.style.position = "absolute";
+    menu.style.left = `${rect.left}px`;
+    menu.style.top = `${rect.top - 40}px`;
+    // cerrar al click afuera
+    setTimeout(
+      () =>
+        document.addEventListener("click", () => menu.remove(), { once: true }),
+      10
+    );
+  }
+
+  socket.on("users_status", (list) => {
+    window.userStatusMap = {}; // global memoria
+    list.forEach((u) => {
+      window.userStatusMap[u.username] = {
+        online: u.online,
+        lastSeen: u.lastSeen,
+      };
+    });
+
+    refreshUserListStatus();
+  });
+
+  function refreshUserListStatus() {
+    const items = document.querySelectorAll(".user-item");
+
+    items.forEach((item) => {
+      const user = item.dataset.username;
+      const status = window.userStatusMap[user];
+      if (!status) return;
+
+      let badge = item.querySelector(".status-badge");
+      if (!badge) {
+        badge = document.createElement("div");
+        badge.className = "status-badge";
+        item.appendChild(badge);
+      }
+
+      if (status.online) {
+        badge.textContent = "🟢 En línea";
+        badge.style.color = "green";
+      } else {
+        const date = new Date(status.lastSeen);
+        badge.textContent = "🕓 Visto: " + date.toLocaleTimeString();
+        badge.style.color = "gray";
+      }
+    });
+  }
+
+  socket.on("message_reaction_update", ({ scope, msgId, reactions, conv }) => {
+    // buscar el mensaje por data-msgId (en messagesEl)
+    const msgEl = messagesEl.querySelector(
+      `.message[data-msg-id="${msgId}"], .message[data-msg-id='${msgId}']`
+    );
+    if (msgEl) {
+      // actualizar contenedor .reactions
+      let rx = msgEl.querySelector(".reactions");
+      if (!rx) {
+        rx = document.createElement("div");
+        rx.className = "reactions";
+        msgEl.appendChild(rx);
+      }
+      rx.innerHTML = ""; // limpiar
+      Object.entries(reactions || {}).forEach(([emoji, users]) => {
+        if (users.length) {
+          const span = document.createElement("span");
+          span.className = "reaction";
+          span.textContent = `${emoji} ${users.length}`;
+          rx.appendChild(span);
+        }
+      });
+    }
+  });
 
   function escapeHtml(text) {
     const d = document.createElement("div");
@@ -301,6 +421,42 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+let typingTimeout;
+msgInput.addEventListener("input", () => {
+  const scope = currentView.type === "room" ? "room" : "private";
+  const to = currentView.type === "private" ? currentView.id : undefined;
+  socket.emit("typing", { to, scope });
+
+  // opcional: detener envío continuo (debounce)
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => {
+    socket.emit("typing_stop", { to, scope });
+  }, 1500);
+});
+
+const typingIndicatorEl = document.createElement("div");
+typingIndicatorEl.id = "typingIndicator";
+typingIndicatorEl.style.padding = "6px 12px";
+typingIndicatorEl.style.fontStyle = "italic";
+typingIndicatorEl.style.color = "#666";
+document.querySelector(".chat-header").appendChild(typingIndicatorEl);
+
+socket.on("typing", ({ from, scope }) => {
+  // mostrar solo si corresponde a la vista actual
+  if (scope === "room" && currentView.type === "room") {
+    typingIndicatorEl.textContent = `${from} está escribiendo...`;
+  } else if (
+    scope === "private" &&
+    currentView.type === "private" &&
+    currentView.id === from
+  ) {
+    typingIndicatorEl.textContent = `${from} está escribiendo...`;
+  }
+});
+
+socket.on("typing_stop", ({ from }) => {
+  if (typingIndicatorEl) typingIndicatorEl.textContent = "";
+});
 // Actualizar si cambia el localStorage
 window.addEventListener("storage", (e) => {
   if (e.key === "connecta_bg_url") {

@@ -4,7 +4,7 @@ const http = require("http");
 const path = require("path");
 const socketio = require("socket.io");
 const backgrounds = {};
-
+const avatars = {};
 
 const app = express();
 const server = http.createServer(app);
@@ -27,18 +27,42 @@ function getConversationId(a, b) {
 io.on("connection", (socket) => {
   console.log("🟢 Usuario conectado");
 
-  socket.on("join", (payload) => {
-    const { username } = payload || {};
+  socket.on("join", ({ username }) => {
     if (!username) return;
     socket.username = username;
 
     if (!users.has(username)) {
-      users.set(username, { username, sockets: new Set() });
+      users.set(username, {
+        username,
+        sockets: new Set(),
+        lastSeen: null,
+        online: true,
+      });
     }
-    users.get(username).sockets.add(socket.id);
 
-    io.emit("users", Array.from(users.keys()));
+    const user = users.get(username);
+    user.sockets.add(socket.id);
+    user.online = true;
+    user.lastSeen = null;
+
+    // enviar usuarios conectados + estados
+    io.emit(
+      "users_status",
+      Array.from(users.values()).map((u) => ({
+        username: u.username,
+        online: u.online,
+        lastSeen: u.lastSeen,
+      }))
+    );
+
+    // historial público
     socket.emit("public_history", publicMessages.slice(-200));
+
+    // avatares
+    socket.emit("avatars", avatars);
+
+    // fondos
+    socket.emit("backgrounds", backgrounds);
   });
 
   socket.on("public_message", (data) => {
@@ -77,6 +101,56 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Reaccionar a un mensaje
+  socket.on("react_message", ({ msgId, reaction, scope, withUser }) => {
+    if (!socket.username || !msgId || !reaction) return;
+
+    // scope: 'public' or 'private'
+    if (scope === "public") {
+      const msg = publicMessages.find((m) => m.id === msgId);
+      if (msg) {
+        msg.reactions = msg.reactions || {}; // { emoji: [user1, user2...] }
+        msg.reactions[reaction] = msg.reactions[reaction] || [];
+        // toggle: si ya reaccionó, quitar; si no, agregar
+        const idx = msg.reactions[reaction].indexOf(socket.username);
+        if (idx >= 0) msg.reactions[reaction].splice(idx, 1);
+        else msg.reactions[reaction].push(socket.username);
+        io.emit("message_reaction_update", {
+          scope: "public",
+          msgId,
+          reactions: msg.reactions,
+        });
+      }
+    } else if (scope === "private" && withUser) {
+      const conv = getConversationId(socket.username, withUser);
+      const msgs = privateMessages[conv] || [];
+      const msg = msgs.find((m) => m.id === msgId);
+      if (msg) {
+        msg.reactions = msg.reactions || {};
+        msg.reactions[reaction] = msg.reactions[reaction] || [];
+        const idx = msg.reactions[reaction].indexOf(socket.username);
+        if (idx >= 0) msg.reactions[reaction].splice(idx, 1);
+        else msg.reactions[reaction].push(socket.username);
+
+        // notificar a participantes del conv
+        const participants = conv.split("|");
+        participants.forEach((p) => {
+          const entry = users.get(p);
+          if (entry) {
+            entry.sockets.forEach((sid) =>
+              io.to(sid).emit("message_reaction_update", {
+                scope: "private",
+                msgId,
+                reactions: msg.reactions,
+                conv,
+              })
+            );
+          }
+        });
+      }
+    }
+  });
+
   socket.on("get_private_history", (data) => {
     const withUser = data.with;
     if (!socket.username || !withUser) return;
@@ -87,29 +161,40 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log("🔴 Usuario desconectado");
+
     if (socket.username) {
       const entry = users.get(socket.username);
       if (entry) {
         entry.sockets.delete(socket.id);
+
         if (entry.sockets.size === 0) {
-          users.delete(socket.username);
+          // usuario totalmente offline
+          entry.online = false;
+          entry.lastSeen = new Date().toISOString();
         }
-        io.emit("users", Array.from(users.keys()));
+
+        io.emit(
+          "users_status",
+          Array.from(users.values()).map((u) => ({
+            username: u.username,
+            online: u.online,
+            lastSeen: u.lastSeen,
+          }))
+        );
       }
     }
   });
-
-   socket.on("avatarChange", ({ username, avatar }) => {
+  socket.on("avatarChange", ({ username, avatar }) => {
     if (!username || !avatar) return;
-    avatars[username] = avatar;             // guardar
+    avatars[username] = avatar; // guardar
     io.emit("avatarUpdate", { username, avatar }); // notificar a todos
   });
 
   socket.on("backgroundUpdate", ({ username, background }) => {
-  if (!username || !background) return;
-  backgrounds[username] = background;
-  io.emit("backgroundUpdate", { username, background });
-});
+    if (!username || !background) return;
+    backgrounds[username] = background;
+    io.emit("backgroundUpdate", { username, background });
+  });
 
   socket.on("join", (payload) => {
     const { username } = payload || {};
@@ -132,9 +217,25 @@ io.on("connection", (socket) => {
 
     socket.emit("backgrounds", backgrounds);
   });
-});
 
-const avatars = {};
+  socket.on("typing", ({ to, scope }) => {
+    // scope: 'room' or 'private'; to only used for private (username)
+    if (scope === "room") {
+      socket.broadcast.emit("typing", { from: socket.username, scope: "room" });
+    } else if (scope === "private" && to) {
+      const recipient = users.get(to);
+      if (recipient) {
+        recipient.sockets.forEach((sid) =>
+          io.to(sid).emit("typing", {
+            from: socket.username,
+            scope: "private",
+            fromUser: socket.username,
+          })
+        );
+      }
+    }
+  });
+});
 
 // ✅ Servidor arrancando FUERA del bloque
 server.listen(PORT, () => {

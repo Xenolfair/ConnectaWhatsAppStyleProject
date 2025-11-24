@@ -31,7 +31,23 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentView = { type: "room", id: "GENERAL" };
 
   // -------------------- Envío de mensajes --------------------
-  btnSend.addEventListener("click", () => {
+btnSend.addEventListener("click", () => {
+  const text = msgInput.value.trim();
+  if (!text) return;
+
+  if (currentView.type === "room") {
+    socket.emit("public_message", { content: text });
+  } else if (currentView.type === "private") {
+    socket.emit("private_message", { to: currentView.id, content: text });
+  }
+  msgInput.value = "";
+});
+
+
+msgInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+
     const text = msgInput.value.trim();
     if (!text) return;
 
@@ -40,11 +56,36 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (currentView.type === "private") {
       socket.emit("private_message", { to: currentView.id, content: text });
     }
+
     msgInput.value = "";
-  });
+  }
+});
+
+  let lastMessageDate = null;
+
+  function insertDaySeparatorIfNeeded(createdAt) {
+    const msgDate = new Date(createdAt).toDateString();
+
+    if (msgDate !== lastMessageDate) {
+      lastMessageDate = msgDate;
+
+      const sep = document.createElement("div");
+      sep.className = "day-separator";
+
+      const today = new Date().toDateString();
+      const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+      if (msgDate === today) sep.textContent = "Hoy";
+      else if (msgDate === yesterday) sep.textContent = "Ayer";
+      else sep.textContent = msgDate;
+
+      messagesEl.appendChild(sep);
+    }
+  }
 
   // -------------------- Añadir mensajes --------------------
   function addMessage(msg, opts = { prepend: false }) {
+    insertDaySeparatorIfNeeded(msg.createdAt);
     const el = document.createElement("div");
     el.className = "message " + (msg.from === username ? "me" : "other");
     const who = msg.from === username ? "Tú" : msg.from;
@@ -358,6 +399,9 @@ document.addEventListener("DOMContentLoaded", () => {
       socket.emit("get_private_history", { with: userTo });
     }
 
+    messagesEl.classList.remove("fade-in");
+    setTimeout(() => messagesEl.classList.add("fade-in"), 10);
+
     applyOtherUserBackgrounds();
   }
 
@@ -433,6 +477,16 @@ msgInput.addEventListener("input", () => {
     socket.emit("typing_stop", { to, scope });
   }, 1500);
 });
+
+(function applyAutoTheme() {
+  const hour = new Date().getHours();
+  const isNight = hour < 6 || hour > 18;
+  if (isNight) {
+    document.documentElement.setAttribute("data-theme", "night");
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+  }
+})();
 
 const typingIndicatorEl = document.createElement("div");
 typingIndicatorEl.id = "typingIndicator";

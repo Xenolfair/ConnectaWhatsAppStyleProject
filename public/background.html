@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cambia tu fondo - Connecta</title>
+    <link
+      rel="shortcut icon"
+      href="/rocket_launch_24dp_2AB673_FILL0_wght400_GRAD0_opsz24.svg"
+      type="image/svg+xml"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: var(--accent);
+        color: #fff;
+        font-family: sans-serif;
+      }
+      form {
+        background: rgba(0, 0, 0, 0.4);
+        padding: 20px;
+        border-radius: 10px;
+        width: 90%;
+        max-width: 400px;
+      }
+      input {
+        width: 100%;
+        padding: 10px;
+        border-radius: 6px;
+        border: none;
+        margin-top: 10px;
+      }
+      button {
+        margin-top: 15px;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #fff;
+        cursor: pointer;
+        font-weight: bold;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Personaliza tu fondo de chat</h2>
+    <form id="bgForm">
+      <label for="bgUrl">Ingresa la URL de tu imagen:</label>
+      <input type="url" id="bgUrl" placeholder="https://..." required />
+      <button type="submit">Guardar fondo</button>
+    </form>
+    <button id="backBtn">Volver al chat</button>
+    <h2>Cambia tu foto de perfil</h2>
+    <form id="avatarForm">
+      <label for="avatarUrl">Ingresa la URL de tu nueva foto:</label>
+      <input type="url" id="avatarUrl" placeholder="https://..." required />
+      <button type="submit">Guardar foto</button>
+    </form>
+    <script>
+      const bgForm = document.getElementById("bgForm");
+      const bgInput = document.getElementById("bgUrl");
+      const backBtn = document.getElementById("backBtn");
+
+      const avatarForm = document.getElementById("avatarForm");
+      const avatarInput = document.getElementById("avatarUrl");
+
+      // Cargar valores guardados
+      const savedBg = localStorage.getItem("connecta_bg_url");
+      if (savedBg) bgInput.value = savedBg;
+
+      const savedAvatar = localStorage.getItem("connecta_avatar_url");
+      if (savedAvatar) avatarInput.value = savedAvatar;
+
+      // Guardar fondo
+      bgForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const url = bgInput.value.trim();
+        if (url) {
+          localStorage.setItem("connecta_bg_url", url);
+          alert("✅ Fondo guardado correctamente");
+        }
+      });
+
+      // Guardar avatar
+      avatarForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const url = avatarInput.value.trim();
+        if (url) {
+          localStorage.setItem("connecta_avatar_url", url);
+          alert("🖼️ Foto de perfil actualizada correctamente");
+        }
+      });
+
+      // Botón volver
+      backBtn.addEventListener("click", () => {
+        window.location.href = "index.html";
+      });
+
+      const socket = io();
+
+      // Guardar avatar
+      avatarForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const url = avatarInput.value.trim();
+        if (url) {
+          localStorage.setItem("connecta_avatar_url", url);
+          alert("🖼️ Foto de perfil actualizada correctamente");
+
+          // Emitir el cambio al servidor para que lo propague a otros clientes
+          const username = localStorage.getItem("connecta_username");
+          if (username) {
+            socket.emit("avatarChange", { username, avatar: url });
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

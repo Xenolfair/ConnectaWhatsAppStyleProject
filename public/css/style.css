@@ -1,0 +1,144 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Host+Grotesk:ital,wght@0,300..800;1,300..800&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&family=Shadows+Into+Light&display=swap');
+
+/* style.css - basic WhatsApp Web like layout */
+:root{--sidebar-width: 300px;--accent: #2ab673;--bg-url: url("https://i.pinimg.com/1200x/25/bd/14/25bd1438b5fb08237273ca3917e8cdb5.jpg");}
+
+*{box-sizing:border-box}
+body,html{height:100%;margin:0;font-family:Inter, system-ui, Arial, sans-serif;background:#e9ecef;}
+
+.app{display:flex;height:100vh;}
+
+/* Sidebar */
+.sidebar{width:var(--sidebar-width);background:#ffffff;border-right:1px solid #ddd;display:flex;flex-direction:column;}
+.sidebar-header{padding:16px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;}
+.brand{font-weight:700;color:var(--accent);font-size:20px;}
+.search{padding:10px;border-bottom:1px solid #f4f4f4;}
+.search input{width:100%;padding:8px;border-radius:8px;border:1px solid #eee}
+
+
+.form button {border: none;background: none;color: #8b8ba7;}
+.form {--timing: 0.3s;--height-of-input: 40px;--border-height: 2px;--input-bg: #fff;--border-color: var(--accent);--border-radius: 30px;--after-border-radius: 1px;position: relative;width: var(--width-of-input);height: var(--height-of-input);display: flex;align-items: center;padding-inline: 0.8em;border-radius: var(--border-radius);transition: border-radius 0.5s ease;background: #ffffff; box-shadow: 1.25px 1.25px 3.25px #bebebe,-1.25px -1.25px 3.25px #ffffff} 
+.input {font-size: 0.9rem;background-color: transparent;width: 100%;height: 100%;padding-inline: 0.5em;padding-block: 0.7em;border: none;}
+.form:before {content: "";position: absolute;background: var(--border-color);transform: scaleX(0);transform-origin: center;width: 100%;height: var(--border-height);left: 0;bottom: 0;border-radius: 1px;transition: transform var(--timing) ease;}
+.form:focus-within {border-radius: var(--after-border-radius);}
+.form input:focus {outline: none;}
+.search input {border:none;}
+.form:focus-within:before {transform: scale(1);}
+.reset {border: none;background: none;opacity: 0;visibility: hidden;}
+.form input:not(:placeholder-shown) ~ .reset {opacity: 1;visibility: visible;}
+.form svg {width: 17px;margin-top: 3px;}
+
+/* rooms and users list */
+.rooms{padding:8px;}
+.room-item{padding:10px;border-radius:8px;margin-bottom:6px;cursor:pointer;}
+.room-item.active{background:#f1f8f4;color:#000;font-weight:600;}
+.users-list{padding:8px;overflow:auto;flex:1;}
+.user-item{padding:20px 10px;border-radius:8px;margin-bottom:6px;cursor:pointer;border:1px solid #f0f0f0}
+.user-item:hover{background:#fafafa;cursor:pointer;border:1px solid #f0f0f0;transition: 0.3s;}
+
+/* Chat area */
+.chat-area{flex:1;display:flex;flex-direction:column;position:relative;background-image:var(--bg-url);background-size:cover;background-position:center;}
+.chat-area::before{content:"";position:absolute;inset:0;background:rgba(255,255,255,0.85);pointer-events:none;}
+.chat-header{height:64px;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--accent);position:relative;z-index:1;background: rgba(224, 93, 93, 0); /* casi transparente */}
+.messages{flex:1;padding:16px;overflow:auto;position:relative;z-index:1;}
+.message{max-width:70%;margin:8px 0;padding:10px;border-radius:12px;box-shadow:0 1px 0 rgba(0,0,0,0.06);background:#fff;}
+.message.me{margin-left:auto;background:#dcf8c6;}
+.message .meta{font-size:12px;color:#555;margin-bottom:6px;}
+.composer{display:flex;padding:10px;border-top:1px solid #eee;background:transparent;position:relative;z-index:1;}
+.composer input{flex:1;padding:10px;border-radius:20px;border:1px solid #ddd;margin-right:8px;}
+.composer button{padding:10px 14px;border-radius:20px;border:none;background:var(--accent);color:#fff;cursor:pointer}
+
+/* Fancy-ass Input Styling 10.0 - The Emoji Extravaganza */
+.composer {position: relative;padding: 3px;border-radius: 1.7rem;overflow: hidden;}
+.composer input {background-color: #f5f5f5;border: 2px solid #ddd;padding: 0.5rem 3rem 0.5rem 3rem; /* Increased left padding for emoji */font-size: 1.1rem;width: 100%;border-radius: 1.5rem;color:#575656;box-shadow: 0 0.4rem #dfd9d9, inset 0 0 0 transparent;transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);position: relative;z-index: 2;}
+.composer input:focus {outline: none;border-color: var(--accent); /* Changed to blue */box-shadow: 0 0.6rem #dfd9d9, 0 0 15px rgba(74, 226, 107, 0.7); /* Blue glow */}
+.composer input::placeholder {color: #a0c0e8; /* Lighter blue for placeholder */transition: all 0.3s ease;}
+.composer input:focus::placeholder {opacity: 0;transform: translateX(10px);}
+/* Emoji styles */
+.composer::after {cursor:pointer; content: "😎";position: absolute;left: 1rem;top: 50%;transform: translateY(-50%);font-size: 1.2rem;z-index: 3;transition: all 0.3s ease;}
+/* Emoji animations */
+@keyframes dance {0%,100% {transform: translateY(-50%) rotate(0deg);}25% {transform: translateY(-50%) rotate(-20deg) scale(1.1);}75% {transform: translateY(-50%) rotate(20deg) scale(1.1);}}
+.composer:hover::after {animation: dance 0.5s ease infinite;}
+.composer:focus-within::after {content: "😂";animation: dance 0.3s ease infinite;}
+.composer input::placeholder {color: #ccc;transition: all 0.3s ease;}
+.composer input:focus::placeholder {opacity: 0;transform: translateX(10px);}
+/* Psychedelic background effect */
+.composer::before {content: "";position: absolute;top: -50%;left: -50%;width: 200%;height: 200%;background: conic-gradient(from 0deg,#4ae2a8,#6ae9b8,#8bf0b569,#adf7c9,#d0ffef77,#adf7ce,#8bf0b863,#75e96a70,#4ae29b94);animation: rotate 4s linear infinite;opacity: 0;transition: opacity 0.3s ease;z-index: 1;}
+.composerr:hover::before,
+.composer:focus-within::before {opacity: 1;}
+@keyframes rotate {100% {transform: rotate(360deg);}}
+/* Shockwave effect on focus */
+@keyframes shockwave {0% {transform: scale(1);box-shadow: 0 0 0 0 rgba(127, 255, 170, 0.384);}70% {box-shadow: 0 0 0 20px rgba(255, 127, 127, 0);}100% {transform: scale(1);box-shadow: 0 0 0 0 rgba(255, 127, 127, 0);}}
+.composer:focus-within {animation: shockwave 0.5s ease-out;}
+/* Floating label effect */
+.composer {--label-size: 0.8rem;--label-transform: translateY(-170%) scale(0.8);}
+.composer input:placeholder-shown + label {transform: translateY(-50%);font-size: 1rem;}
+.composer label {position: absolute;left: 1rem;top: 50%;transform: var(--label-transform);font-size: var(--label-size);color: #ff7f7f;transition: all 0.3s ease;pointer-events: none;z-index: 3;}
+.composer input:not(:placeholder-shown) + label,
+.composer input:focus + label {transform: var(--label-transform);font-size: var(--label-size);}
+
+/* login gate */
+/*.login-gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);}*/
+.login-gate {display: flex;flex-direction: column;align-items: center;justify-content: center;position: fixed;top: 0;left: 0;width: 100%;height: 100%;background-color: rgba(0, 0, 0, 0.65); /* semitransparente para que destaque */backdrop-filter: blur(6px);z-index: 9999; /* hace que esté por encima de todo */color: #fff;}
+.login-gate input {padding: 10px;border-radius: 8px;border: none;outline: none;margin-top: 10px;width: 200px;text-align: center;}
+.login-gate button {background-color: #25d366;border: none;border-radius: 8px;color: white;padding: 10px 15px;margin-top: 15px;cursor: pointer;font-weight: bold;}
+.login-gate button:hover {background-color: #1da955;}
+.composer button {font-family: inherit;font-size: 17px;background: linear-gradient(135deg, #2ab673, #86ec92);color: white;display: flex;align-items: center;border: none;border-radius: 55px;overflow: hidden;transition: all 0.2s;cursor: pointer;box-shadow: 1.25px 1.25px 3.25px #bebebe,-1.25px -1.25px 3.25px #ffffff}
+.composer button span {display: block;margin-left: 0.3em;transition: all 0.3s ease-in-out;}
+.composer button svg {display: block;transform-origin: center center;transition: transform 0.3s ease-in-out;}
+.composer button:hover .svg-wrapper {animation: fly-1 0.6s ease-in-out infinite alternate;}
+.composer button:hover svg {transform: translateX(1.2em) rotate(45deg) scale(1.1);}
+.composer button:hover span {transform: translateX(5em);}
+.composer button:active {transform: scale(0.95);}
+@keyframes fly-1 {from {transform: translateY(0.1em);}to {transform: translateY(-0.1em);}}
+.center-card{color:#000; background:#fff;padding:24px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.12);width:320px;text-align:center;}
+.center-card input{width:100%;padding:10px;margin-top:10px;border-radius:8px;border:1px solid #eee}
+.center-card button{margin-top:10px;padding:10px 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer}
+
+/* Burbuja mensajes nuevos */
+.unread-bubble {position: absolute;top: 5px;right: 8px;background-color: #25D366; /* verde WhatsApp */color: white;font-size: 12px;padding: 2px 6px;border-radius: 50%;min-width: 18px;text-align: center;display: none;}
+.user-item {position: relative;}
+#room-general {position: relative;}
+#chatSubtitle {display: flex;justify-content: center; /* Centra horizontalmente */align-items: center;     /* Centra verticalmente */}
+#chatSubtitle h3 span { color: var(--accent);
+  font-family: "Dancing Script", cursive;
+  font-weight: 700;
+  font-style: normal;
+  text-shadow: 0.5px 0.5px 0 var(--accent);}
+/* Cambiar fondo */
+#chatSubtitle h3 {font-weight:300 ;}
+#meName{font-weight: bold; color:#0b3a1e;}
+#messages {background-image: var(--bg-url);background-size: cover;background-position: center;}
+/*.change-bg-btn {background: var(--accent);color: white;border: none;padding: 8px 12px;border-radius: 6px;cursor: pointer;font-weight: bold;}*/
+.change-bg-btn {padding: 1em 2em;background-color: white; border: none;/*border-radius: 5px;*/border-top: 2px solid var(--accent);font-weight: bold;letter-spacing: 5px;text-transform: uppercase;cursor: pointer;color: var(--accent);transition: all 1000ms;font-size: 15px;position: relative; overflow: hidden;outline: none;}
+.change-bg-btn:hover {color: #ffffff;transform: scale(1.01);outline: 2px solid #70bdca;box-shadow: 4px 5px 17px -4px var(--accent);}
+.change-bg-btn::before {content: "";position: absolute;left: -50px;top: 0;width: 0;height: 100%;background-color: var(--accent);transform: skewX(45deg);z-index: -1;transition: width 1000ms;}
+.change-bg-btn:hover::before {width: 250%;}
+.myinfo {display: flex;align-items: center;justify-content: center;gap: 10px;flex-direction: column;padding: 15px 0;}
+.avatar {width: 70px;height: 70px;border-radius: 50%;object-fit: cover;border: 2px solid var(--accent);box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);}
+
+/*lista redes sociales*/
+ul {list-style: none;}
+.example-2 {display: flex;justify-content: center;align-items: center;padding:0px;}
+.example-2 .icon-content {margin: 0 10px;position: relative;}
+.example-2 .icon-content .tooltip {position: absolute;top: -30px;left: 50%;transform: translateX(-50%);color: #fff;padding: 6px 10px;border-radius: 5px;opacity: 0;visibility: hidden;font-size: 14px;transition: all 0.3s ease;}
+.example-2 .icon-content:hover .tooltip {opacity: 1;visibility: visible;top: -50px;}
+.example-2 .icon-content a {position: relative;overflow: hidden;display: flex;justify-content: center;align-items: center;width: 50px;height: 50px;border-radius: 50%;color: var(--accent);background-color: #fff;transition: all 0.3s ease-in-out;}
+.example-2 .icon-content a:hover {box-shadow: 3px 2px 45px 0px rgb(0 0 0 / 12%);}
+.example-2 .icon-content a svg {position: relative;z-index: 1;width: 30px;height: 30px;}
+.example-2 .icon-content a:hover {color: white;}
+.example-2 .icon-content a .filled {position: absolute;top: auto;bottom: 0;left: 0;width: 100%;height: 0;background-color: #000;transition: all 0.3s ease-in-out;}
+.example-2 .icon-content a:hover .filled {height: 100%;}
+.example-2 .icon-content a[data-social="linkedin"] .filled,
+.example-2 .icon-content a[data-social="linkedin"] ~ .tooltip {background-color: #0274b3;}
+.example-2 .icon-content a[data-social="github"] .filled,
+.example-2 .icon-content a[data-social="github"] ~ .tooltip {background-color: #24262a;}
+.example-2 .icon-content a[data-social="instagram"] .filled,
+.example-2 .icon-content a[data-social="instagram"] ~ .tooltip {background: linear-gradient(45deg,#405de6,#5b51db,#b33ab4,#c135b4,#e1306c,#fd1f1f);}
+.example-2 .icon-content a[data-social="youtube"] .filled,.example-2 .icon-content a[data-social="youtube"] ~ .tooltip {background-color: #ff0000;}
+
+/*panel emojis*/
+.emoji-panel {position: absolute;bottom: 60px;left: 20px;width: 260px;max-height: 180px;background: #fff;border-radius: 10px;padding: 10px;display: grid;grid-template-columns: repeat(6, 1fr);gap: 8px;box-shadow: 0 4px 20px rgba(0,0,0,0.2);font-size: 22px;cursor: pointer;overflow-y: auto;z-index: 20;}
+.hidden {display: none !important;}
+.emoji-panel span {transition: transform .1s;}
+.emoji-panel span:hover {transform: scale(1.3);}

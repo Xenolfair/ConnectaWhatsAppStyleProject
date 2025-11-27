@@ -1,7 +1,7 @@
 {
-  "name": "connecta-whatsapp-style",
+  "name": "connecta_estilo_whatsapp",
   "version": "1.0.0",
-  "description": "Connecta - WhatsApp Web style chat (Node + Socket.io). No DB, in-memory storage. Demo project.",
+  "description": "Connecta - WhatsApp Web",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

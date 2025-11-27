@@ -4,6 +4,16 @@
   --sidebar-width: 300px;
   --accent: #2ab673;
   --bg-url: url("https://i.pinimg.com/736x/f7/ca/ad/f7caade73d0e6233736f21922f2dc7d2.jpg");
+  /*
+    https://i.pinimg.com/736x/f7/ca/ad/f7caade73d0e6233736f21922f2dc7d2.jpg
+    
+    https://i.pinimg.com/736x/8f/e7/b5/8fe7b597fdd25e2359088b7e34077eee.jpg
+    https://i.pinimg.com/1200x/20/d3/51/20d351a961a02b20744f4efa651bc8a9.jpg
+
+    https://i.pinimg.com/736x/73/6c/fe/736cfe2a3aada7af6581d48ecd5a4740.jpg
+    https://i.pinimg.com/736x/80/f6/3d/80f63d8762238ed990268f86637174f5.jpg
+    https://i.pinimg.com/736x/9a/8f/b6/9a8fb6f8870929c247c9e19133c9c0de.jpg
+    */
   --glass-bg: rgba(255, 255, 255, 0.12);
   --glass-border: rgba(255, 255, 255, 0.25);
   --glass-blur: 12px;

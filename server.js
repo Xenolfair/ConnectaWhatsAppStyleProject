@@ -1,4 +1,3 @@
-// Simple Connecta server (no DB) - in-memory storage
 const express = require("express");
 const http = require("http");
 const path = require("path");
@@ -12,13 +11,11 @@ const io = socketio(server);
 
 const PORT = process.env.PORT || 4000;
 
-// Serve static client
 app.use(express.static(path.join(__dirname, "public")));
 
-// In-memory stores
-const users = new Map(); // users: { username, sockets: Set() }
-const publicMessages = []; // array of {id, from, content, createdAt}
-const privateMessages = {}; // { conversationId: [messages...] }
+const users = new Map();
+const publicMessages = []; 
+const privateMessages = {}; 
 
 function getConversationId(a, b) {
   return [a, b].sort().join("|");
@@ -45,7 +42,7 @@ io.on("connection", (socket) => {
     user.online = true;
     user.lastSeen = null;
 
-    // enviar usuarios conectados + estados
+    // enviar usuarios conectados con sus estados
     io.emit(
       "users_status",
       Array.from(users.values()).map((u) => ({
@@ -105,13 +102,11 @@ io.on("connection", (socket) => {
   socket.on("react_message", ({ msgId, reaction, scope, withUser }) => {
     if (!socket.username || !msgId || !reaction) return;
 
-    // scope: 'public' or 'private'
     if (scope === "public") {
       const msg = publicMessages.find((m) => m.id === msgId);
       if (msg) {
-        msg.reactions = msg.reactions || {}; // { emoji: [user1, user2...] }
+        msg.reactions = msg.reactions || {}; 
         msg.reactions[reaction] = msg.reactions[reaction] || [];
-        // toggle: si ya reaccionó, quitar; si no, agregar
         const idx = msg.reactions[reaction].indexOf(socket.username);
         if (idx >= 0) msg.reactions[reaction].splice(idx, 1);
         else msg.reactions[reaction].push(socket.username);
@@ -132,7 +127,7 @@ io.on("connection", (socket) => {
         if (idx >= 0) msg.reactions[reaction].splice(idx, 1);
         else msg.reactions[reaction].push(socket.username);
 
-        // notificar a participantes del conv
+        // notificar a participantes del cevento
         const participants = conv.split("|");
         participants.forEach((p) => {
           const entry = users.get(p);
@@ -168,7 +163,8 @@ io.on("connection", (socket) => {
         entry.sockets.delete(socket.id);
 
         if (entry.sockets.size === 0) {
-          // usuario totalmente offline
+
+          // usuario totalmente offline (sisale de la sesion)
           entry.online = false;
           entry.lastSeen = new Date().toISOString();
         }
@@ -219,7 +215,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on("typing", ({ to, scope }) => {
-    // scope: 'room' or 'private'; to only used for private (username)
     if (scope === "room") {
       socket.broadcast.emit("typing", { from: socket.username, scope: "room" });
     } else if (scope === "private" && to) {
@@ -237,8 +232,8 @@ io.on("connection", (socket) => {
   });
 });
 
-// ✅ Servidor arrancando FUERA del bloque
+// Servidor
 server.listen(PORT, () => {
-  console.log("🚀 Connecta server listening on", PORT);
-  console.log("👉 Abre http://localhost:" + PORT + " en tu navegador");
+  console.log("🚀 Connecta Web fue ejecutado en:", PORT);
+  console.log("💻⚠️ Abre http://localhost:" + PORT + " en tu navegador");
 });

@@ -1,4 +1,3 @@
-// login.js - manages simple username login stored in localStorage
 document.addEventListener("DOMContentLoaded", () => {
   const stored = localStorage.getItem("connecta_username");
   const loginGate = document.getElementById("loginGate");
@@ -30,7 +29,6 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem("connecta_username", v);
     document.getElementById("meName").textContent = v;
     showApp();
-    // reload to init socket with username
     location.reload();
   });
 });

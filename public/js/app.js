@@ -1,16 +1,13 @@
-// app.js - client side logic for Connecta (no DB, in-memory on server)
 document.addEventListener("DOMContentLoaded", () => {
-  const avatars = {}; // mapa username -> avatarUrl
-  const DEFAULT_AVATAR =
-    "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+  const avatars = {}; // mapa username para avatar avatarUrl
+  const DEFAULT_AVATAR ="https://cdn-icons-png.flaticon.com/512/149/149071.png";
   const username = localStorage.getItem("connecta_username");
   const loginGate = document.getElementById("loginGate");
   const app = document.getElementById("app");
-  const chatHistory = {}; // 🔹 Guardará el historial de cada chat
+  const chatHistory = {};
   const backgrounds = {};
 
-  if (!username) return; // show login gate (handled by login.js)
-
+  if (!username) return; 
   const socket = io();
 
   socket.on("connect", () => {
@@ -103,7 +100,7 @@ msgInput.addEventListener("keydown", (e) => {
     else messagesEl.appendChild(el);
     messagesEl.scrollTop = messagesEl.scrollHeight;
 
-    // 🔹 Guardar historial del chat actual
+    // Guardado de historial de chat
     const chatId = currentView.type === "room" ? "GENERAL" : currentView.id;
     chatHistory[chatId] = messagesEl.innerHTML;
 
@@ -127,12 +124,11 @@ msgInput.addEventListener("keydown", (e) => {
   messagesEl.addEventListener("click", (e) => {
     const msgEl = e.target.closest(".message");
     if (!msgEl) return;
-    // abre un mini-panel de reacciones (simple prompt o menú)
     showReactionsMenu(msgEl);
   });
 
   function showReactionsMenu(msgEl) {
-    // menú simple: emojis predefinidos
+    // menú de emojis:
     const emojis = ["👍", "❤️", "😂", "🔥", "😮", "😢"];
     const menu = document.createElement("div");
     menu.className = "reaction-menu";
@@ -142,7 +138,7 @@ msgInput.addEventListener("keydown", (e) => {
       btn.textContent = em;
       btn.addEventListener("click", () => {
         const msgId = msgEl.dataset.msgId;
-        // scope: deducir si es public o private
+        // revision de mensaje privado o publico
         const scope = currentView.type === "room" ? "public" : "private";
         const withUser =
           currentView.type === "private" ? currentView.id : undefined;
@@ -151,13 +147,13 @@ msgInput.addEventListener("keydown", (e) => {
       });
       menu.appendChild(btn);
     });
-    // posiciona el menú y añádelo al body
+
+    // posiciona el menú 
     document.body.appendChild(menu);
     const rect = msgEl.getBoundingClientRect();
     menu.style.position = "absolute";
     menu.style.left = `${rect.left}px`;
     menu.style.top = `${rect.top - 40}px`;
-    // cerrar al click afuera
     setTimeout(
       () =>
         document.addEventListener("click", () => menu.remove(), { once: true }),
@@ -166,7 +162,7 @@ msgInput.addEventListener("keydown", (e) => {
   }
 
   socket.on("users_status", (list) => {
-    window.userStatusMap = {}; // global memoria
+    window.userStatusMap = {};
     list.forEach((u) => {
       window.userStatusMap[u.username] = {
         online: u.online,
@@ -204,19 +200,17 @@ msgInput.addEventListener("keydown", (e) => {
   }
 
   socket.on("message_reaction_update", ({ scope, msgId, reactions, conv }) => {
-    // buscar el mensaje por data-msgId (en messagesEl)
     const msgEl = messagesEl.querySelector(
       `.message[data-msg-id="${msgId}"], .message[data-msg-id='${msgId}']`
     );
     if (msgEl) {
-      // actualizar contenedor .reactions
       let rx = msgEl.querySelector(".reactions");
       if (!rx) {
         rx = document.createElement("div");
         rx.className = "reactions";
         msgEl.appendChild(rx);
       }
-      rx.innerHTML = ""; // limpiar
+      rx.innerHTML = "";
       Object.entries(reactions || {}).forEach(([emoji, users]) => {
         if (users.length) {
           const span = document.createElement("span");
@@ -253,10 +247,9 @@ msgInput.addEventListener("keydown", (e) => {
   });
 
   function applyOtherUserBackgrounds() {
-    const active = currentChatUser; // ya la tienes en tu app.js
+    const active = currentChatUser; 
     if (!active) return;
 
-    // Si es chat privado, usar fondo del otro usuario
     const bg = backgrounds[active];
     if (bg) {
       chatBody.style.backgroundImage = `url('${bg}')`;
@@ -265,7 +258,7 @@ msgInput.addEventListener("keydown", (e) => {
     }
   }
 
-  // -------------------- Sistema de burbujas --------------------
+  // -------------------- Sistema de burbujas de mensajes nuevos --------------------
   const unreadCounts = {};
 
   function incrementUnread(chatId) {
@@ -328,7 +321,7 @@ msgInput.addEventListener("keydown", (e) => {
       const item = document.createElement("div");
       item.className = "user-item";
 
-      // ✅ Añadir imagen circular por defecto al lado del nombre
+      // imagen circular por defecto al lado del nombre
       const img = document.createElement("img");
       img.src = avatars[u] || DEFAULT_AVATAR;
       img.alt = u;
@@ -354,20 +347,17 @@ msgInput.addEventListener("keydown", (e) => {
       item.addEventListener("click", () => openPrivateChat(u));
       usersListEl.appendChild(item);
 
-      updateUnreadBubble(u); // 🔹 mantener el contador si ya había mensajes nuevos
+      updateUnreadBubble(u);
     });
   });
 
   socket.on("avatars", (serverAvatars) => {
-    // serverAvatars es un objeto { username: avatarUrl, ... }
     Object.assign(avatars, serverAvatars);
-    // re-render de la lista de usuarios si está visible
-    // Simula re-emisión de users para refrescar
+
     const event = new Event("refreshUsers");
     document.dispatchEvent(event);
   });
 
-  // recibir actualización puntual
   socket.on("avatarUpdate", ({ username: who, avatar }) => {
     avatars[who] = avatar;
     // actualizar la imagen si el usuario está en la lista
@@ -378,11 +368,9 @@ msgInput.addEventListener("keydown", (e) => {
   });
 
   document.addEventListener("refreshUsers", () => {
-    // solicitar re-render: emitir 'users' cache desde el servidor no es necesario
-    // simplemente re-triggerear el mismo handler (si tienes la lista en memoria)
-    // Si no mantienes la lista en memoria, puedes pedir una re-emisión simple:
     socket.emit("request_users");
   });
+
   // -------------------- Abrir chat privado --------------------
   function openPrivateChat(userTo) {
     const prevChatId = currentView.type === "room" ? "GENERAL" : currentView.id;
@@ -431,7 +419,6 @@ msgInput.addEventListener("keydown", (e) => {
     }
   });
 
-  // 🔹 Fondo de chat desde localStorage o predeterminado
   const savedBg = localStorage.getItem("connecta_bg_url");
   const root = document.documentElement;
   if (savedBg) {
@@ -439,7 +426,7 @@ msgInput.addEventListener("keydown", (e) => {
   } else {
     root.style.setProperty(
       "--bg-url",
-      'url("https://i.pinimg.com/1200x/25/bd/14/25bd1438b5fb08237273ca3917e8cdb5.jpg")'
+      'url("https://i.pinimg.com/736x/f7/ca/ad/f7caade73d0e6233736f21922f2dc7d2.jpg")'
     );
   }
 });
@@ -496,7 +483,7 @@ typingIndicatorEl.style.color = "#666";
 document.querySelector(".chat-header").appendChild(typingIndicatorEl);
 
 socket.on("typing", ({ from, scope }) => {
-  // mostrar solo si corresponde a la vista actual
+
   if (scope === "room" && currentView.type === "room") {
     typingIndicatorEl.textContent = `${from} está escribiendo...`;
   } else if (
@@ -511,6 +498,7 @@ socket.on("typing", ({ from, scope }) => {
 socket.on("typing_stop", ({ from }) => {
   if (typingIndicatorEl) typingIndicatorEl.textContent = "";
 });
+
 // Actualizar si cambia el localStorage
 window.addEventListener("storage", (e) => {
   if (e.key === "connecta_bg_url") {
